@@ -30,11 +30,6 @@ class flooding:
                  "id":row["@id"][60:]}
             measures.append(m)
         
-        #   REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # for m in measures:
-        #     print(m)
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
         #create a master list including dataframes for each available measure
         self.master = []
         for m in measures:
@@ -52,7 +47,6 @@ class flooding:
             oldest = datetime.now() - timedelta(hours=time//1,minutes=time%1*60)
             filter += f"?since={datetime_to_str(oldest)}"
 
-        # print(f"{root}{item}.html{filter}")
         try:
             req = R.get(f"{root}{item}.csv{filter}").content
         except:
@@ -96,9 +90,9 @@ class flooding:
         plt.show()
 
     def table(self,open:bool=False) -> pd.DataFrame:
+        #make a list of all dataframes as well as labels for the dataframe columns
         all_dfs = []
         value_labels = []
-        #make a list of all dataframes as well as labels for the dataframe columns
         for m in self.master:
             value_labels.append(f'{m["name"]}-{m["qualifier"]}-{m["value"]} ({m["unit"]})')
             all_dfs.append(m["df"].copy())
