@@ -96,20 +96,31 @@ class flooding:
     def table(self,to_file:bool=True) -> pd.DataFrame:
         all_dfs = []
         value_labels = []
+        #make a list of all dataframes as well as labels for the dataframe columns
         for m in self.master:
             value_labels.append(f'{m["name"]}-{m["qualifier"]}-{m["value"]} ({m["unit"]})')
             all_dfs.append(m["df"])
         
+        #rename "value" comlumns
         for df,label in zip(all_dfs,value_labels):
             del df["measure"]
-            
             df.rename(columns={"dateTime":"DateTime","value":label},inplace=True)
-            print(df)
+            df.set_index("DateTime")
 
-        return None#, master_df
+        #join all of the dataframes
+        master_df = all_dfs[0].copy()
+        for df in all_dfs[1:]:
+            master_df = master_df.join(df,rsuffix="_copy")
+            del master_df["DateTime_copy"]
+
+        #change DateTime column to be DateTime objects instead of strings
+        master_df["DateTime"] = master_df["DateTime"].apply(lambda x: str_to_datetime(x))
+
+        return master_df
 
 
 if __name__ == "__main__":
-    a = flooding("720763")
+    # a = flooding("720763")
+    a = flooding("1029TH")
     # a.plot()
     a.table()
