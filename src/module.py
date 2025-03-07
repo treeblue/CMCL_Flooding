@@ -94,7 +94,7 @@ class flooding:
         fig.legend()
         plt.show()
 
-    def table(self,to_file:bool=True,open:bool=True) -> pd.DataFrame:
+    def table(self,open:bool=False) -> pd.DataFrame:
         all_dfs = []
         value_labels = []
         #make a list of all dataframes as well as labels for the dataframe columns
@@ -116,11 +116,10 @@ class flooding:
 
         #change DateTime column to be DateTime objects instead of strings
         master_df["DateTime"] = master_df["DateTime"].apply(lambda x: str_to_datetime(x))
-
         master_df.to_csv("Flooding_Data.csv")
         if open:
-            from IPython.display import display
-            display(master_df)
+            import os
+            os.startfile("Flooding_Data.csv")
 
         return master_df
 
@@ -129,4 +128,4 @@ if __name__ == "__main__":
     # a = flooding("720763")
     a = flooding("1029TH")
     # a.plot()
-    a.table()
+    a.table(open=True)
