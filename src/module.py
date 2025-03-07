@@ -14,66 +14,102 @@ def datetime_to_str(dt:datetime) -> str:
     #converts a datetime object to the API's time fromat
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-def readings_getter(station_ID:str, time:float=24.) -> pd.DataFrame:
-    #gets the latest {time}hrs worth of readings from the api
-    root = "https://environment.data.gov.uk/flood-monitoring/id/stations/"
-    ending = "/readings.csv"
-    oldest = datetime.now() - timedelta(hours=time//1,minutes=time%1*60)
-    time_filter = f"?since={datetime_to_str(oldest)}"
+class flooding:
+    def __init__(self,station_ID:str,time:float=24.): #time is in hours
+        #find possible measures for station
+        df = self.data_getter(f"/id/stations/{station_ID}/measures")
+        measures = []
+        for row in df.iloc:
+            m = {"name":row["parameterName"],
+                 "parameter":row["parameter"],
+                 "qualifier":row["qualifier"],
+                 "unit":row["unitName"],
+                 "value":row["valueType"],
+                 "id":row["@id"][60:]}
+            measures.append(m)
+        
+        #   REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # for m in measures:
+        #     print(m)
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
+        #create a master list including dataframes for each available measure
+        self.master = []
+        for m in measures:
+            minidf = self.data_getter(f'/id/measures/{m["id"]}/readings',time)
+            if type(minidf) == pd.DataFrame:
+                m["df"] = minidf
+                self.master.append(m)
+        
 
-    try:
-        req = R.get(f"{root}{station_ID}{ending}{time_filter}").content
-    except:
-        raise Exception("Error grabbing data from the API")
+    def data_getter(self,item:str,time:float=None,m:dict=None) -> pd.DataFrame: #returns None if no data found
+        #gets readings from the Flooding API, possible option to filter for both time (in hrs) and by measure type
+        root = "https://environment.data.gov.uk/flood-monitoring/"
+        filter = ""
+        if time != None:
+            oldest = datetime.now() - timedelta(hours=time//1,minutes=time%1*60)
+            filter += f"?since={datetime_to_str(oldest)}"
+
+        # print(f"{root}{item}.html{filter}")
+        try:
+            req = R.get(f"{root}{item}.csv{filter}").content
+        except:
+            raise Exception("Error grabbing data from the API")
+        
+        try:
+            return pd.read_csv(io.StringIO(req.decode("utf-8")))
+        except:
+            return None
     
-    return pd.read_csv(io.StringIO(req.decode("utf-8")))
-
-
-
-def plotter(df:pd.DataFrame) -> None:
-    
-    #determine which measures the station has
-    possible_measures = {
-        "Water Level":"level",
-        "Flow":"flow",
-        "Wind Direction":"wind-direction",
-        "Wind Speed":"wind-speed",
-        "Temperature":"temperature"}
-    measures = {}
-    for m in df["measure"]:
-        for pm in possible_measures:
-            if possible_measures[pm] in m:
-                if pm in measures:
-                    if m[60:] not in measures[pm]:
-                        measures[pm].append(m[60:])
+    def plot(self) -> None:
+        #create axes for each measure
+        fig, ax = plt.subplots()
+        axes = {}
+        for m in self.master:
+            if m["name"] not in axes:
+                if len(axes) > 1:
+                    axes[m["name"]] = ax.twinx()
                 else:
-                    measures[pm] = [m[60:]]
-
-    #create axes for each measure
-    fig, ax = plt.subplots()
-    axes = [ax] + [ax.twinx() for _ in range(len(measures)-1)]
-    # print(axes)
-                
-    #plot on each axis
-    for ms,axis in zip(measures,axes):
-        for m in measures[ms]:
+                    axes[m["name"]] = ax
+        
+        #plot on each axis
+        for m in self.master:
             times = []
             values = []
-            for i in range(len(df["value"])):
-                if m in df["measure"].iloc[i]:
-                    times.append(str_to_datetime(df["dateTime"].iloc[i]))
-                    values.append(df["value"].iloc[i])
-            axis.plot(times,values,label=m)
+            for i in range(len(m["df"]["value"])):
+                times.append(str_to_datetime(m["df"]["dateTime"].iloc[i]))
+                values.append(m["df"]["value"].iloc[i])
+            axes[m["name"]].plot(times,values,label=f'{m["name"]} - {m["qualifier"]} ({m["value"]})')
+            axes[m["name"]].set_ylabel(f'{m["name"]} - {m["qualifier"]} ({m["unit"]})')
 
-    ticks = plt_ticker.LinearLocator(6)
-    axes[0].xaxis.set_major_locator(ticks)
-    format = plt_dates.DateFormatter("%m/%d %H:%M")
-    axes[0].xaxis.set_major_formatter(format)
-    plt.xticks(rotation=30)
-    
-    axes[0].set_xlabel("Date & Time")
-    for label,axis in zip(measures.keys(),axes):
-        axis.set_ylabel(label)
-    fig.legend()
-    plt.show()
+        #other plot setting
+        ticks = plt_ticker.LinearLocator(6)
+        ax.xaxis.set_major_locator(ticks)
+        format = plt_dates.DateFormatter("%m/%d %H:%M")
+        ax.xaxis.set_major_formatter(format)
+        plt.xticks(rotation=30)
+        
+        ax.set_xlabel("Date & Time")
+        fig.legend()
+        plt.show()
 
+    def table(self,to_file:bool=True) -> pd.DataFrame:
+        all_dfs = []
+        value_labels = []
+        for m in self.master:
+            value_labels.append(f'{m["name"]}-{m["qualifier"]}-{m["value"]} ({m["unit"]})')
+            all_dfs.append(m["df"])
+        
+        for df,label in zip(all_dfs,value_labels):
+            del df["measure"]
+            
+            df.rename(columns={"dateTime":"DateTime","value":label},inplace=True)
+            print(df)
+
+        return None#, master_df
+
+
+if __name__ == "__main__":
+    a = flooding("720763")
+    # a.plot()
+    a.table()

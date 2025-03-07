@@ -1,7 +1,5 @@
 #this uses Environment Agency flood and river level data from the real-time data API (Beta)
-
-
-from module import *
+from module import flooding
 
 
 other = "https://environment.data.gov.uk/flood-monitoring/id/floodAreas/122WAC953"
@@ -10,8 +8,8 @@ trial = "https://environment.data.gov.uk/flood-monitoring/id/stations/1029TH/rea
 
 
 if __name__ == "__main__":
-    df = readings_getter("1029TH",time=24.)
-    # df = readings_getter("720763")
+    df = flooding("1029TH")
+    # df = flooding("720763")
+    df.plot()
 
-
-    plotter(df)
+    # plotter(df)
