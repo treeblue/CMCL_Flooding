@@ -6,6 +6,7 @@ import matplotlib.ticker as plt_ticker
 import matplotlib.dates as plt_dates
 from datetime import datetime, timedelta
 
+
 def str_to_datetime(API_dt:str) -> datetime:
     #converts the API's time format to a datetime object
     return datetime.strptime(API_dt,"%Y-%m-%dT%H:%M:%SZ")
@@ -93,7 +94,7 @@ class flooding:
         fig.legend()
         plt.show()
 
-    def table(self,to_file:bool=True) -> pd.DataFrame:
+    def table(self,to_file:bool=True,open:bool=True) -> pd.DataFrame:
         all_dfs = []
         value_labels = []
         #make a list of all dataframes as well as labels for the dataframe columns
@@ -115,6 +116,11 @@ class flooding:
 
         #change DateTime column to be DateTime objects instead of strings
         master_df["DateTime"] = master_df["DateTime"].apply(lambda x: str_to_datetime(x))
+
+        master_df.to_csv("Flooding_Data.csv")
+        if open:
+            from IPython.display import display
+            display(master_df)
 
         return master_df
 
