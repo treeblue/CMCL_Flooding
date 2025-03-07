@@ -101,7 +101,7 @@ class flooding:
         #make a list of all dataframes as well as labels for the dataframe columns
         for m in self.master:
             value_labels.append(f'{m["name"]}-{m["qualifier"]}-{m["value"]} ({m["unit"]})')
-            all_dfs.append(m["df"])
+            all_dfs.append(m["df"].copy())
         
         #rename "value" comlumns
         for df,label in zip(all_dfs,value_labels):
@@ -128,5 +128,5 @@ class flooding:
 if __name__ == "__main__":
     # a = flooding("720763")
     a = flooding("1029TH")
-    # a.plot()
+    a.plot()
     a.table(open=True)
