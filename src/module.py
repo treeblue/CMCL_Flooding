@@ -17,6 +17,7 @@ def datetime_to_str(dt:datetime) -> str:
 
 class flooding:
     def __init__(self,station_ID:str,time:float=24.): #time is in hours
+        self.station = station_ID
         #find possible measures for station
         df = self.data_getter(f"/id/stations/{station_ID}/measures")
         measures = []
@@ -116,10 +117,10 @@ class flooding:
 
         #change DateTime column to be DateTime objects instead of strings
         master_df["DateTime"] = master_df["DateTime"].apply(lambda x: str_to_datetime(x))
-        master_df.to_csv("Flooding_Data.csv")
+        master_df.to_csv(f"{self.station}_Flooding_Data.csv")
         if open:
             import os
-            os.startfile("Flooding_Data.csv")
+            os.startfile(f"{self.station}_Flooding_Data.csv")
 
         return master_df
 
