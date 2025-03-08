@@ -76,46 +76,10 @@ class flooding:
         for ax,param in zip(axs,axes):
             for m in self.master:
                 if m["parameter"] == param:
+                    m["df"].sort_values(by=["dateTime"],inplace=True)
                     ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})')
                     ax.set_ylabel(m["name"])
             ax.legend()
-
-
-        # axes = []
-        # for m in self.master:
-        #     if m["name"] not in axes:
-        #         if len(axes) > 1:
-        #             axes.append(ax.twin())
-        #             axes_names[m["name"]] = i
-                    
-        #         else:
-        #             axes.append(ax)
-        #     i+=1
-        # print(axes)
-        
-        # # axes[m["name"]].get_yaxis().set_tick_params(direction='out')
-        # # axes[m["name"]].spines["right"].set_position(("axes",displace))     
-        # # axes[m["name"]].set_ylabel(f'{m["name"]} - {m["qualifier"]} ({m["unit"]})')      
-        # fig.subplots_adjust(right=0.75)
-        
-        
-        # # for name in axes:
-            
-        
-        # last = axes[list(axes.keys())[0]]
-        # last.set_frame_on(True)
-        # last.patch.set_visible(False)
-        
-
-        # #plot on each axis
-        # for m in self.master:
-        #     times = []
-        #     values = []
-        #     for i in range(len(m["df"]["value"])):
-        #         times.append(str_to_datetime(m["df"]["dateTime"].iloc[i]))
-        #         values.append(m["df"]["value"].iloc[i])
-        #     axes[m["name"]].plot(times,values,label=f'{m["name"]} - {m["qualifier"]} ({m["value"]})')
-            
 
         #other plot setting
         ticks = plt_ticker.LinearLocator(6)
@@ -125,7 +89,6 @@ class flooding:
         plt.xticks(rotation=30)
         
         axs[-1].set_xlabel("Date & Time")
-        # fig.legend()
         plt.show()
 
     def table(self,open:bool=False) -> pd.DataFrame:
