@@ -17,14 +17,14 @@ def datetime_to_str(dt:datetime) -> str:
 
 class flooding:
     def __init__(self,station,time:float=24.): #time is in hours
-        station_IDs = []
-        if type(station) == int:
+    
+        if type(station)==int or any(i.isdigit() for i in str(station)):
             station_IDs = [str(station)]
         elif type(station) == str:
             DF = self.data_getter("/id/stations",filter=f"?label={station}")
             station_IDs = list(DF["stationReference"].iloc[:])
         else:
-            raise Exception("Please use either a station ID (int) of station name (str) as an input")
+            raise Exception("Please use either a station ID (int/str) or station name (str) as an input")
 
         self.station = str(station)
 
@@ -83,7 +83,6 @@ class flooding:
             axs = [axs]
         
         for ax,param in zip(axs,axes):
-            print(param)
             for m in self.master:
                 if m["parameter"] == param:
                     m["df"].sort_values(by=["dateTime"],inplace=True)
@@ -132,11 +131,11 @@ class flooding:
 
 
 if __name__ == "__main__":
-    # a = flooding("COOMBE CELLARS")
+    a = flooding("COOMBE CELLARS")
     # a = flooding("720763")
     # a = flooding("1029TH")
     # a = flooding(733548) #has no readings in the last 24 hours as of 08/03/2025
-    a = flooding(50181) #has wind speed in both (Knot) and (Knots)
+    # a = flooding(50181) #has wind speed in both (Knot) and (Knots)
     # a = flooding("3680")
     a.plot()
     # a.table(open=True)
