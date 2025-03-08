@@ -16,20 +16,31 @@ def datetime_to_str(dt:datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 class flooding:
-    def __init__(self,station_ID:str,time:float=24.): #time is in hours
-        self.station = station_ID
-        #find possible measures for station
-        df = self.data_getter(f"/id/stations/{station_ID}/measures")
+    def __init__(self,station,time:float=24.): #time is in hours
+        station_IDs = []
+        if type(station) == int:
+            station_IDs = [str(station)]
+        elif type(station) == str:
+            DF = self.data_getter("/id/stations",filter=f"?label={station}")
+            station_IDs = list(DF["stationReference"].iloc[:])
+        else:
+            raise Exception("Please use either a station ID (int) of station name (str) as an input")
+
+        self.station = str(station)
+
+        #find possible measures for station (across all station IDs)
         measures = []
-        for row in df.iloc:
-            m = {"name":row["parameterName"],
-                 "parameter":row["parameter"],
-                 "qualifier":row["qualifier"],
-                 "unit":row["unitName"],
-                 "value":row["valueType"],
-                 "id":row["@id"][60:]}
-            measures.append(m)
-        
+        for station_ID in station_IDs:
+            df = self.data_getter(f"/id/stations/{station_ID}/measures")
+            for row in df.iloc:
+                m = {"name":row["parameterName"],
+                    "parameter":row["parameter"],
+                    "qualifier":row["qualifier"],
+                    "unit":row["unitName"],
+                    "value":row["valueType"],
+                    "id":row["@id"][60:]}
+                measures.append(m)
+
         #create a master list including dataframes for each available measure
         self.master = []
         for m in measures:
@@ -41,15 +52,14 @@ class flooding:
         if len(self.master) == 0:
             raise Exception(f"There are no readings from this station in the last {time//1} hours")
         
-
-    def data_getter(self,item:str,time:float=None,m:dict=None) -> pd.DataFrame: #returns None if no data found
+    def data_getter(self,item:str,time:float=None,m:dict=None,filter:str="") -> pd.DataFrame: #returns None if no data found
         #gets readings from the Flooding API, possible option to filter for both time (in hrs) and by measure type
-        root = "https://environment.data.gov.uk/flood-monitoring/"
-        filter = ""
+        root = "https://environment.data.gov.uk/flood-monitoring"
         if time != None:
             oldest = datetime.now() - timedelta(hours=time//1,minutes=time%1*60)
             filter += f"?since={datetime_to_str(oldest)}"
 
+        # print(f"{root}{item}{filter}") #printing link for debugging
         try:
             req = R.get(f"{root}{item}.csv{filter}").content
         except:
@@ -67,13 +77,13 @@ class flooding:
         for m in self.master:
             if m["parameter"] not in axes:
                 axes.append(m["parameter"])
-        print(self.master)
 
         fig, axs = plt.subplots(nrows=len(axes),sharex=True)
         if len(axes) == 1:
             axs = [axs]
         
         for ax,param in zip(axs,axes):
+            print(param)
             for m in self.master:
                 if m["parameter"] == param:
                     m["df"].sort_values(by=["dateTime"],inplace=True)
@@ -122,10 +132,11 @@ class flooding:
 
 
 if __name__ == "__main__":
+    # a = flooding("COOMBE CELLARS")
     # a = flooding("720763")
     # a = flooding("1029TH")
-    # a = flooding("733548") #has no readings in the last 24 hours as of 08/03/2025
-    a = flooding("50181")
+    # a = flooding(733548) #has no readings in the last 24 hours as of 08/03/2025
+    a = flooding(50181) #has wind speed in both (Knot) and (Knots)
     # a = flooding("3680")
     a.plot()
     # a.table(open=True)
