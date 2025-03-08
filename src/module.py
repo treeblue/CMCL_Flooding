@@ -17,6 +17,12 @@ def datetime_to_str(dt:datetime) -> str:
 
 class flooding:
     def __init__(self,station,time:float=24.): #time is in hours
+        self.station = str(station)
+        self.colour_cycle = ['#377eb8', '#ff7f00', '#4daf4a',
+                  '#f781bf', '#a65628', '#984ea3',
+                  '#999999', '#e41a1c', '#dede00']
+        self.colour_index = 0
+
         if type(station)==int or any(i.isdigit() for i in str(station)):
             station_IDs = [str(station)]
         elif type(station) == str:
@@ -25,7 +31,7 @@ class flooding:
         else:
             raise Exception("Please use either a station ID (int/str) or station name (str) as an input")
 
-        self.station = str(station)
+        
 
         #find possible measures for station (across all station IDs)
         measures = []
@@ -87,29 +93,32 @@ class flooding:
                     m["df"].sort_values(by=["dateTime"],inplace=True)
                     if param == "wind":
                         continue
-                    ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})')
+                    ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})',color=self.colour_cycle[self.colour_index])
+                    self.colour_index = (self.colour_index + 1)/len(self.colour_cycle)
                     ax.set_ylabel(m["name"])
-            ax.legend()
+            if param != "wind"
+                ax.legend()
         
         if "wind" in axes:
             ax1 = axs[axes.index("wind")]
             ax2 = ax1.twinx()
             ax1unit = "Knots"
             ax2unit = "deg"
+            ax1colour = self.colour_cycle[self.colour_index]
+            ax2colour = self.colour_cycle[self.colour_index+1]
+            self.colour_index = (self.colour_index + 2)/len(self.colour_cycle)
             for m in self.master:
                 if m["parameter"] == "wind":
                     if m["qualifier"] == "Speed":
                         ax1unit = m["unit"]
-                        ax1.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Speed {m["value"]}',color="green")
+                        ax1.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Speed {m["value"]}',color=ax1colour)
                     elif m["qualifier"] == "Direction":
                         ax2unit = m["unit"]
-                        ax2.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Direction {m["value"]}',color="red")
+                        ax2.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Direction {m["value"]}',color=ax2colour)
             ax1.set_ylabel(f'Wind Speed ({ax1unit})')
-            ax1.tick_params(axis='y',labelcolor="green")
+            ax1.tick_params(axis='y',labelcolor=ax1colour)
             ax2.set_ylabel(f'Wind Direction ({ax2unit})')
-            ax2.tick_params(axis='y',labelcolor="red")
-            # ax1.legend()
-            # ax2.legend()
+            ax2.tick_params(axis='y',labelcolor=ax1colour)
 
         #other plot setting
         ticks = plt_ticker.LinearLocator(6)
