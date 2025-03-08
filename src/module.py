@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as plt_ticker
 import matplotlib.dates as plt_dates
 from datetime import datetime, timedelta
+import tkinter as tk
 
 
 def str_to_datetime(API_dt:str) -> datetime:
@@ -30,8 +31,6 @@ class flooding:
             station_IDs = list(DF["stationReference"].iloc[:])
         else:
             raise Exception("Please use either a station ID (int/str) or station name (str) as an input")
-
-        
 
         #find possible measures for station (across all station IDs)
         measures = []
@@ -105,8 +104,9 @@ class flooding:
             ax1unit = "Knots"
             ax2unit = "deg"
             ax1colour = self.colour_cycle[self.colour_index]
-            ax2colour = self.colour_cycle[self.colour_index+1]
-            self.colour_index = (self.colour_index + 2)%len(self.colour_cycle)
+            self.colour_index = (self.colour_index + 1)%len(self.colour_cycle)
+            ax2colour = self.colour_cycle[self.colour_index]
+            self.colour_index = (self.colour_index + 1)%len(self.colour_cycle)
             for m in self.master:
                 if m["parameter"] == "wind":
                     if m["qualifier"] == "Speed":
@@ -118,7 +118,7 @@ class flooding:
             ax1.set_ylabel(f'Wind Speed ({ax1unit})')
             ax1.tick_params(axis='y',labelcolor=ax1colour)
             ax2.set_ylabel(f'Wind Direction ({ax2unit})')
-            ax2.tick_params(axis='y',labelcolor=ax1colour)
+            ax2.tick_params(axis='y',labelcolor=ax2colour)
 
         #other plot setting
         ticks = plt_ticker.LinearLocator(6)
@@ -128,7 +128,8 @@ class flooding:
         plt.xticks(rotation=30)
         
         axs[-1].set_xlabel("Date & Time")
-        fig.tight_layout()
+        # fig.tight_layout()
+        axs[0].set_title(self.station)
         plt.show()
 
     def table(self,open:bool=False) -> pd.DataFrame:
@@ -160,13 +161,70 @@ class flooding:
 
         return master_df
 
+class selector:
+    def __init__(self):
+        df = self.get_stations()
+        df.sort_values(["label","status"],inplace=True)
+        temp_stations = [label for label in df["label"].iloc[:]]
+        temp_status = [str(status)[63:] for status in df["status"].iloc[:]]
+
+        self.stations = []
+        status = []
+
+        for station,stat in zip(temp_stations,temp_status):
+            if station not in self.stations:
+                self.stations.append(station)
+                if stat == "":
+                    status.append("N/A")
+                else:
+                    status.append(stat)
+            else:
+                if stat != "":
+                    status[-1] = stat
+        
+        self.root = tk.Tk()
+        self.root.title("Select station using the <Return> key")
+        self.root.minsize(520, 300)
+        scroller = tk.Scrollbar(self.root)
+        scroller.pack(side="right",fill="y")
+        
+        self.options = tk.Listbox(yscrollcommand=scroller.set)
+        for station,status in zip(self.stations,status):
+            self.options.insert("end",f"{station} (Status: {status})")
+        
+        self.options.pack(side="left",fill="both",expand="yes")
+        scroller.config(command=self.options.yview)
+        
+        self.root.bind("<Return>",self.exit)
+        self.root.mainloop()
+    
+    def get_stations(self) -> pd.DataFrame:
+        url = "https://environment.data.gov.uk/flood-monitoring/id/stations"
+        try:
+            req = R.get(f"{url}.csv").content
+        except:
+            raise Exception(f"Error getting data from the API at {url}")
+        
+        try:
+            return pd.read_csv(io.StringIO(req.decode("utf-8")))
+        except:
+            raise Exception(f"Error reading data at {url}")
+    
+    def exit(self,event) -> None:
+        self.station = self.stations[self.options.curselection()[0]]
+        self.root.destroy()
+
 
 if __name__ == "__main__":
-    a = flooding("COOMBE CELLARS")
-    # a = flooding("720763")
-    a = flooding("1029TH")
+    #these are for my testing purposes
+    s = selector()
+    print(s.station)
+    # a = flooding("COOMBE CELLARS")
+    # a = flooding("1029TH")
     # a = flooding(733548) #has no readings in the last 24 hours as of 08/03/2025
     # a = flooding(50181) #has wind speed in both (Knot) and (Knots)
     # a = flooding("3680")
-    a.plot()
+    a = flooding(s.station)
     # a.table(open=True)
+    a.plot()
+    
