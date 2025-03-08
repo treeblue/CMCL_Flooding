@@ -1,5 +1,6 @@
 ## Overview
 This project provides a framework to access recent data from the real time flood monitoring API (https://environment.data.gov.uk/flood-monitoring/doc/reference) and provides a basic gui and sample script in which how to use the framework.
+All following code snippits are in Python.
 
 ## Python libraries used:
 - requests
