@@ -38,6 +38,9 @@ class flooding:
                 m["df"] = minidf
                 self.master.append(m)
         
+        if len(self.master) == 0:
+            raise Exception(f"There are no readings from this station in the last {time//1} hours")
+        
 
     def data_getter(self,item:str,time:float=None,m:dict=None) -> pd.DataFrame: #returns None if no data found
         #gets readings from the Flooding API, possible option to filter for both time (in hrs) and by measure type
@@ -64,6 +67,7 @@ class flooding:
         for m in self.master:
             if m["parameter"] not in axes:
                 axes.append(m["parameter"])
+        print(self.master)
 
         fig, axs = plt.subplots(nrows=len(axes),sharex=True)
         if len(axes) == 1:
@@ -156,8 +160,9 @@ class flooding:
 
 if __name__ == "__main__":
     # a = flooding("720763")
-    a = flooding("1029TH")
-    # a = flooding("50181")
+    # a = flooding("1029TH")
+    # a = flooding("733548") #has no readings in the last 24 hours as of 08/03/2025
+    a = flooding("50181")
     # a = flooding("3680")
     a.plot()
     # a.table(open=True)
