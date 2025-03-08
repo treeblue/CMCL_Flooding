@@ -94,9 +94,9 @@ class flooding:
                     if param == "wind":
                         continue
                     ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})',color=self.colour_cycle[self.colour_index])
-                    self.colour_index = (self.colour_index + 1)/len(self.colour_cycle)
+                    self.colour_index += (self.colour_index + 1)%len(self.colour_cycle)
                     ax.set_ylabel(m["name"])
-            if param != "wind"
+            if param != "wind":
                 ax.legend()
         
         if "wind" in axes:
@@ -106,7 +106,7 @@ class flooding:
             ax2unit = "deg"
             ax1colour = self.colour_cycle[self.colour_index]
             ax2colour = self.colour_cycle[self.colour_index+1]
-            self.colour_index = (self.colour_index + 2)/len(self.colour_cycle)
+            self.colour_index = (self.colour_index + 2)%len(self.colour_cycle)
             for m in self.master:
                 if m["parameter"] == "wind":
                     if m["qualifier"] == "Speed":
@@ -164,7 +164,7 @@ class flooding:
 if __name__ == "__main__":
     a = flooding("COOMBE CELLARS")
     # a = flooding("720763")
-    # a = flooding("1029TH")
+    a = flooding("1029TH")
     # a = flooding(733548) #has no readings in the last 24 hours as of 08/03/2025
     # a = flooding(50181) #has wind speed in both (Knot) and (Knots)
     # a = flooding("3680")
