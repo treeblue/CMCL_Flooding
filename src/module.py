@@ -56,7 +56,7 @@ class flooding:
         if len(self.master) == 0:
             raise Exception(f"There are no readings from this station in the last {time//1} hours")
         
-    def data_getter(self,item:str,time:float=None,m:dict=None,filter:str="") -> pd.DataFrame: #returns None if no data found
+    def data_getter(self,item:str,time:float=None,m:dict=None,filter:str="") -> pd.DataFrame:
         #gets readings from the Flooding API, possible option to filter for both time (in hrs) and by measure type
         root = "https://environment.data.gov.uk/flood-monitoring"
         if time != None:
@@ -67,12 +67,12 @@ class flooding:
         try:
             req = R.get(f"{root}{item}.csv{filter}").content
         except:
-            raise Exception(f"Error getting data from the API at {root}{item}.csv{filter}")
+            raise Exception(f"Error getting data from the API at {root}{item}{filter}")
         
         try:
             return pd.read_csv(io.StringIO(req.decode("utf-8")))
         except:
-            return None
+            raise Exception(f"Error reading data at {root}{item}{filter}")
     
     def plot(self) -> None:
         #create axes for each parameter
@@ -128,7 +128,6 @@ class flooding:
         plt.xticks(rotation=30)
         
         axs[-1].set_xlabel("Date & Time")
-        # fig.tight_layout()
         axs[0].set_title(self.station)
         plt.show()
 
@@ -164,7 +163,7 @@ class flooding:
 class selector:
     def __init__(self):
         df = self.get_stations()
-        df.sort_values(["label","status"],inplace=True)
+        df.sort_values(["status","label"],inplace=True)
         temp_stations = [label for label in df["label"].iloc[:]]
         temp_status = [str(status)[63:] for status in df["status"].iloc[:]]
 
@@ -204,7 +203,6 @@ class selector:
             req = R.get(f"{url}.csv").content
         except:
             raise Exception(f"Error getting data from the API at {url}")
-        
         try:
             return pd.read_csv(io.StringIO(req.decode("utf-8")))
         except:
@@ -218,13 +216,12 @@ class selector:
 if __name__ == "__main__":
     #these are for my testing purposes
     s = selector()
-    print(s.station)
     # a = flooding("COOMBE CELLARS")
     # a = flooding("1029TH")
     # a = flooding(733548) #has no readings in the last 24 hours as of 08/03/2025
     # a = flooding(50181) #has wind speed in both (Knot) and (Knots)
     # a = flooding("3680")
     a = flooding(s.station)
-    # a.table(open=True)
+    a.table(open=True)
     a.plot()
     
