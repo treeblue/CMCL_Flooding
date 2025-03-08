@@ -50,7 +50,7 @@ class flooding:
         try:
             req = R.get(f"{root}{item}.csv{filter}").content
         except:
-            raise Exception("Error grabbing data from the API")
+            raise Exception(f"Error getting data from the API at {root}{item}.csv{filter}")
         
         try:
             return pd.read_csv(io.StringIO(req.decode("utf-8")))
@@ -58,35 +58,70 @@ class flooding:
             return None
     
     def plot(self) -> None:
-        #create axes for each measure
-        fig, ax = plt.subplots()
-        axes = {}
+        #create axes for each parameter
+        axes = []
+        units = []
         for m in self.master:
-            if m["name"] not in axes:
-                if len(axes) > 1:
-                    axes[m["name"]] = ax.twinx()
-                else:
-                    axes[m["name"]] = ax
+            if m["parameter"] not in axes:
+                axes.append(m["parameter"])
+
+        fig, axs = plt.subplots(nrows=len(axes),sharex=True)
+        if len(axes) == 1:
+            axs = [axs]
         
-        #plot on each axis
-        for m in self.master:
-            times = []
-            values = []
-            for i in range(len(m["df"]["value"])):
-                times.append(str_to_datetime(m["df"]["dateTime"].iloc[i]))
-                values.append(m["df"]["value"].iloc[i])
-            axes[m["name"]].plot(times,values,label=f'{m["name"]} - {m["qualifier"]} ({m["value"]})')
-            axes[m["name"]].set_ylabel(f'{m["name"]} - {m["qualifier"]} ({m["unit"]})')
+        for ax,param in zip(axs,axes):
+            for m in self.master:
+                if m["parameter"] == param:
+                    ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})')
+                    ax.set_ylabel(m["name"])
+            ax.legend()
+
+
+        # axes = []
+        # for m in self.master:
+        #     if m["name"] not in axes:
+        #         if len(axes) > 1:
+        #             axes.append(ax.twin())
+        #             axes_names[m["name"]] = i
+                    
+        #         else:
+        #             axes.append(ax)
+        #     i+=1
+        # print(axes)
+        
+        # # axes[m["name"]].get_yaxis().set_tick_params(direction='out')
+        # # axes[m["name"]].spines["right"].set_position(("axes",displace))     
+        # # axes[m["name"]].set_ylabel(f'{m["name"]} - {m["qualifier"]} ({m["unit"]})')      
+        # fig.subplots_adjust(right=0.75)
+        
+        
+        # # for name in axes:
+            
+        
+        # last = axes[list(axes.keys())[0]]
+        # last.set_frame_on(True)
+        # last.patch.set_visible(False)
+        
+
+        # #plot on each axis
+        # for m in self.master:
+        #     times = []
+        #     values = []
+        #     for i in range(len(m["df"]["value"])):
+        #         times.append(str_to_datetime(m["df"]["dateTime"].iloc[i]))
+        #         values.append(m["df"]["value"].iloc[i])
+        #     axes[m["name"]].plot(times,values,label=f'{m["name"]} - {m["qualifier"]} ({m["value"]})')
+            
 
         #other plot setting
         ticks = plt_ticker.LinearLocator(6)
-        ax.xaxis.set_major_locator(ticks)
+        axs[-1].xaxis.set_major_locator(ticks)
         format = plt_dates.DateFormatter("%m/%d %H:%M")
-        ax.xaxis.set_major_formatter(format)
+        axs[-1].xaxis.set_major_formatter(format)
         plt.xticks(rotation=30)
         
-        ax.set_xlabel("Date & Time")
-        fig.legend()
+        axs[-1].set_xlabel("Date & Time")
+        # fig.legend()
         plt.show()
 
     def table(self,open:bool=False) -> pd.DataFrame:
@@ -122,5 +157,7 @@ class flooding:
 if __name__ == "__main__":
     # a = flooding("720763")
     a = flooding("1029TH")
+    # a = flooding("50181")
+    # a = flooding("3680")
     a.plot()
-    a.table(open=True)
+    # a.table(open=True)
