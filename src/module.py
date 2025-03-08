@@ -17,7 +17,6 @@ def datetime_to_str(dt:datetime) -> str:
 
 class flooding:
     def __init__(self,station,time:float=24.): #time is in hours
-    
         if type(station)==int or any(i.isdigit() for i in str(station)):
             station_IDs = [str(station)]
         elif type(station) == str:
@@ -86,9 +85,31 @@ class flooding:
             for m in self.master:
                 if m["parameter"] == param:
                     m["df"].sort_values(by=["dateTime"],inplace=True)
+                    if param == "wind":
+                        continue
                     ax.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'{m["qualifier"]} {m["value"]} ({m["unit"]})')
                     ax.set_ylabel(m["name"])
             ax.legend()
+        
+        if "wind" in axes:
+            ax1 = axs[axes.index("wind")]
+            ax2 = ax1.twinx()
+            ax1unit = "Knots"
+            ax2unit = "deg"
+            for m in self.master:
+                if m["parameter"] == "wind":
+                    if m["qualifier"] == "Speed":
+                        ax1unit = m["unit"]
+                        ax1.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Speed {m["value"]}',color="green")
+                    elif m["qualifier"] == "Direction":
+                        ax2unit = m["unit"]
+                        ax2.plot(m["df"]["dateTime"].apply(str_to_datetime),m["df"]["value"],label=f'Wind Direction {m["value"]}',color="red")
+            ax1.set_ylabel(f'Wind Speed ({ax1unit})')
+            ax1.tick_params(axis='y',labelcolor="green")
+            ax2.set_ylabel(f'Wind Direction ({ax2unit})')
+            ax2.tick_params(axis='y',labelcolor="red")
+            # ax1.legend()
+            # ax2.legend()
 
         #other plot setting
         ticks = plt_ticker.LinearLocator(6)
@@ -98,6 +119,7 @@ class flooding:
         plt.xticks(rotation=30)
         
         axs[-1].set_xlabel("Date & Time")
+        fig.tight_layout()
         plt.show()
 
     def table(self,open:bool=False) -> pd.DataFrame:
