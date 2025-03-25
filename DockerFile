@@ -1,0 +1,8 @@
+FROM python:latest
+
+WORKDIR /usr/flooding/src
+
+COPY src/main.py ./
+COPY src/module.py ./
+
+CMD ['python','./main.py']
