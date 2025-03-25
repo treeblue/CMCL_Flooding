@@ -163,9 +163,7 @@ class flooding:
             else:
                 import subprocess
                 subprocess.call(["xdg-open",f"{self.station}_Flooding_Data.csv"])
-            # os.system(f"xdg-open {self.station}_Flooding_Data.csv")
             
-
         return master_df
 
 class selector:
