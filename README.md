@@ -56,6 +56,7 @@ The selector module uses a gui so a display environment needs to be set when run
 ```bash
 docker run -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <image-name>
 ```
+In addition you may also want to include a shared file directory to actually save the file.
 
 ## Files
 - main.py - contains a full stack script, just run this if you want all data from a station in the last 24 hours
