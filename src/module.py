@@ -155,8 +155,16 @@ class flooding:
         master_df["DateTime"] = master_df["DateTime"].apply(lambda x: str_to_datetime(x))
         master_df.to_csv(f"{self.station}_Flooding_Data.csv")
         if open:
-            import os
-            os.startfile(f"{self.station}_Flooding_Data.csv")
+            import platform
+            
+            if platform.system() == "Windows":
+                import os
+                os.startfile(f"{self.station}_Flooding_Data.csv")
+            else:
+                import subprocess
+                subprocess.call(["xdg-open",f"{self.station}_Flooding_Data.csv"])
+            # os.system(f"xdg-open {self.station}_Flooding_Data.csv")
+            
 
         return master_df
 
