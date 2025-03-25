@@ -59,6 +59,7 @@ docker run -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <image-name>
 
 ## Files
 - main.py - contains a full stack script, just run this if you want all data from a station in the last 24 hours
+- docker_main.py - same as main.py, but doesnt open the .csv file to be more docker friendly
 - module.py - contains both the selector and flooding classes, as well as some test cases which I got manually from the API
 
 ## Additional Notes:
